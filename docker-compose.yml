@@ -1,0 +1,64 @@
+version: '3.7'
+services:
+
+  # PHP-FPM Service
+  application:
+    build:
+      context: .
+      dockerfile: PHPDockerfile
+    image: feegow/php
+    depends_on:
+      - database
+    container_name: feegow_php
+    environment:
+      - SERVICE_NAME=feegow_php
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    networks:
+      - feegow
+
+  # Nginx Server
+  webserver:
+    image: nginx:alpine
+    container_name: feegow_webserver
+    depends_on:
+      - application
+    ports:
+      - "8000:80"
+      - "443:443"
+    volumes:
+      - ./backend:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - feegow
+
+  # Nodejs Service
+  reactjs:
+    build:
+      context: .
+      dockerfile: NodeDockerfile
+    image: feegow/nodejs
+    container_name: feegow_nodejs
+    depends_on: 
+      - webserver
+    ports: 
+      - "3000:3000"
+    networks:
+      - feegow
+
+  # Postgres Server
+  database:
+    image: postgres:13-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=agenda_feegow
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=pgsql
+    networks:
+      - feegow
+
+networks:
+  feegow:
+    driver: bridge

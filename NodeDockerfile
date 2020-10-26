@@ -1,0 +1,17 @@
+FROM mhart/alpine-node
+
+WORKDIR /app
+
+COPY ./frontend/package*.json /app
+
+RUN yarn install --silent
+
+COPY ./frontend .
+
+RUN yarn run build
+
+RUN yarn global add serve
+
+EXPOSE 3000
+
+CMD ["serve", "-p", "3000", "-s", "build"]
